@@ -37,4 +37,4 @@ Contribuições
 Contribuições são bem-vindas! Sinta-se à vontade para enviar pull requests para melhorar este bot.
 
 Autor
-Este bot foi desenvolvido por Leonardo Fragoso, leonardorfragoso@gmail.com .
+Este bot foi desenvolvido por Leonardo Fragoso .
