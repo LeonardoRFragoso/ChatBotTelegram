@@ -24,9 +24,12 @@ Defina a URL do serviço para a qual os usuários serão redirecionados para efe
 
 Certifique-se de ter permissão para criar e escrever em um arquivo de banco de dados SQLite. O script usará um arquivo chamado pagamentos.db para armazenar os registros de pagamento.
 
-Uso
+Uso:
+
 Execute o script Python.
-python telepot_payment_bot.py
+
+python3 app5.py
+
 Inicie uma conversa com o bot no Telegram. Você pode usar o comando /start para iniciar a interação.
 
 Siga as instruções do bot para fornecer seu nome, sobrenome e confirmar o pagamento.
