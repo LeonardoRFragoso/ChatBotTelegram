@@ -2,7 +2,8 @@
 
 Este é um bot Telegram que facilita o processo de pagamento para os usuários. O bot interage com os usuários, coleta informações de pagamento e registra os pagamentos em um banco de dados SQLite.
 
-Funcionalidades
+Funcionalidades:
+
 Solicita o nome e sobrenome do usuário.
 Fornece um link para realizar o pagamento.
 Registra se o pagamento foi confirmado ou não.
