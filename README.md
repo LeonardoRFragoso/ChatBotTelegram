@@ -28,7 +28,7 @@ Uso:
 
 Execute o script Python.
 
-python3 app5.py
+python3 app.py
 
 Inicie uma conversa com o bot no Telegram. Você pode usar o comando /start para iniciar a interação.
 
