@@ -1,3 +1,2 @@
 telepot
 openpyxl
-sqlite3
