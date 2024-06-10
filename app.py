@@ -5,34 +5,35 @@ import sqlite3
 # Insira o token do seu bot aqui
 token = "6933320373:AAHVNQ_4NQ0VU1rrA9_06ydNR-53cCwUPeI"
 
-# URL do serviço
-url = "https://pay.kiwify.com.br/MXMKc1H"
+# URL do site da PyScript.Tech
+url = "https://www.pyscript.tech/"
 
 # Dicionário para armazenar estados dos usuários
 user_states = {}
 
-# Função para inserir um registro de pagamento no banco de dados
-def registrar_pagamento(user_id, user_name, user_last_name, user_username, pagamento):
+# Função para inserir um registro de lead no banco de dados
+def registrar_lead(user_id, user_name, user_last_name, user_username, interesse, descricao):
     # Cria uma conexão separada para garantir que cada operação ocorra na mesma thread
-    conn = sqlite3.connect('pagamentos.db')
+    conn = sqlite3.connect('leads.db')
     cursor = conn.cursor()
 
     cursor.execute('''
-        CREATE TABLE IF NOT EXISTS pagamentos (
+        CREATE TABLE IF NOT EXISTS leads (
             id INTEGER PRIMARY KEY AUTOINCREMENT,
             user_id INTEGER NOT NULL,
             user_name TEXT NOT NULL,
             user_last_name TEXT,
             user_username TEXT,
-            pagamento BOOLEAN NOT NULL
+            interesse TEXT NOT NULL,
+            descricao TEXT
         )
     ''')
     conn.commit()
 
     cursor.execute('''
-        INSERT INTO pagamentos (user_id, user_name, user_last_name, user_username, pagamento)
-        VALUES (?, ?, ?, ?, ?)
-    ''', (user_id, user_name, user_last_name, user_username, pagamento))
+        INSERT INTO leads (user_id, user_name, user_last_name, user_username, interesse, descricao)
+        VALUES (?, ?, ?, ?, ?, ?)
+    ''', (user_id, user_name, user_last_name, user_username, interesse, descricao))
     conn.commit()
     conn.close()
 
@@ -56,34 +57,37 @@ def handle(msg):
 
         if state == 'start':
             if message_text.startswith('/start'):
-                bot.sendMessage(chat_id, "Olá! Antes de continuar, por favor, informe o seu nome :")
+                bot.sendMessage(chat_id, "Olá! Bem-vindo à PyScript.Tech! Qual é o seu nome?")
                 user_states[user_id]['state'] = 'perguntando_nome'
 
         elif state == 'perguntando_nome':
             user_states[user_id]['user_name'] = message_text
-            bot.sendMessage(chat_id, f"Obrigado, {message_text}! Agora, por favor, informe seu sobrenome:")
+            bot.sendMessage(chat_id, f"Obrigado, {message_text}! Qual é o seu sobrenome?")
             user_states[user_id]['state'] = 'perguntando_sobrenome'
 
         elif state == 'perguntando_sobrenome':
             user_states[user_id]['user_last_name'] = message_text
             user_name = user_states[user_id]['user_name']
             user_last_name = user_states[user_id]['user_last_name']
-            bot.sendMessage(chat_id, f"Perfeito, {user_name} {user_last_name}! Clique no link abaixo para realizar o pagamento: {url}")
-            bot.sendMessage(chat_id, "Você realizou o pagamento? (sim/não)")
-            user_states[user_id]['state'] = 'confirmando_pagamento'
+            bot.sendMessage(chat_id, f"Perfeito, {user_name} {user_last_name}! Aqui estão alguns dos serviços que oferecemos:")
+            bot.sendMessage(chat_id, "1. Desenvolvimento Web\n2. Criação de Bots\n3. Automação com Python\n\nPara mais informações, visite nosso site: " + url)
+            bot.sendMessage(chat_id, "Você está interessado em algum serviço específico? (Desenvolvimento Web/Criação de Bots/Automação com Python)")
+            user_states[user_id]['state'] = 'confirmando_interesse'
 
-        elif state == 'confirmando_pagamento':
-            payment_confirmation = message_text.lower()
-            
+        elif state == 'confirmando_interesse':
+            user_states[user_id]['interesse'] = message_text
+            bot.sendMessage(chat_id, "Por favor, descreva brevemente sua necessidade:")
+            user_states[user_id]['state'] = 'perguntando_descricao'
+
+        elif state == 'perguntando_descricao':
+            descricao = message_text
             user_name = user_states[user_id]['user_name']
             user_last_name = user_states[user_id]['user_last_name']
+            interesse = user_states[user_id]['interesse']
 
-            if payment_confirmation in ['sim', 'yes']:
-                registrar_pagamento(user_id, user_name, user_last_name, user_username, True)
-                bot.sendMessage(chat_id, "Pagamento confirmado! Obrigado.")
-            else:
-                registrar_pagamento(user_id, user_name, user_last_name, user_username, False)
-                bot.sendMessage(chat_id, "Pagamento não confirmado. Se precisar de ajuda, entre em contato conosco.")
+            registrar_lead(user_id, user_name, user_last_name, user_username, interesse, descricao)
+            bot.sendMessage(chat_id, "Obrigado pelo seu interesse! Nossa equipe entrará em contato com você em breve.")
+            bot.sendMessage(chat_id, f"Enquanto isso, você pode explorar mais sobre nossos serviços em nosso site: {url}")
 
             # Reseta o estado do usuário para permitir um novo início
             user_states[user_id]['state'] = 'start'
