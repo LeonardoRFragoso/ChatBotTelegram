@@ -1,6 +1,12 @@
 import telepot
 import time
 import sqlite3
+import openpyxl
+import smtplib
+from email.mime.text import MIMEText
+from email.mime.multipart import MIMEMultipart
+from email.mime.application import MIMEApplication
+import os
 
 # Insira o token do seu bot aqui
 token = "6933320373:AAHVNQ_4NQ0VU1rrA9_06ydNR-53cCwUPeI"
@@ -8,8 +14,17 @@ token = "6933320373:AAHVNQ_4NQ0VU1rrA9_06ydNR-53cCwUPeI"
 # URL do site da PyScript.Tech
 url = "https://www.pyscript.tech/"
 
+# ID do Telegram para notificação
+telegram_personal_id = 833732395
+
 # Dicionário para armazenar estados dos usuários
 user_states = {}
+
+# Mensagem inicial pré-definida
+mensagem_inicial = (
+    "Olá! Bem-vindo à PyScript.Tech!\n\n"
+    f"Para mais informações, visite nosso site: {url}"
+)
 
 # Função para inserir um registro de lead no banco de dados
 def registrar_lead(user_id, user_name, user_last_name, user_username, interesse, descricao):
@@ -37,6 +52,62 @@ def registrar_lead(user_id, user_name, user_last_name, user_username, interesse,
     conn.commit()
     conn.close()
 
+    enviar_mensagem_pessoal(user_name, user_last_name, user_username, interesse, descricao)
+    atualizar_planilha(user_name, user_last_name, user_username, interesse, descricao)
+    enviar_email()
+
+# Função para enviar mensagem para o Telegram pessoal
+def enviar_mensagem_pessoal(user_name, user_last_name, user_username, interesse, descricao):
+    mensagem = f"Novo lead:\nNome: {user_name} {user_last_name}\nUsername: {user_username}\nInteresse: {interesse}\nDescrição: {descricao}"
+    bot.sendMessage(telegram_personal_id, mensagem)
+
+# Função para atualizar a planilha
+def atualizar_planilha(user_name, user_last_name, user_username, interesse, descricao):
+    file_path = 'leads.xlsx'
+    
+    if not os.path.exists(file_path):
+        workbook = openpyxl.Workbook()
+        sheet = workbook.active
+        sheet.append(['Nome', 'Sobrenome', 'Username', 'Interesse', 'Descrição'])
+    else:
+        workbook = openpyxl.load_workbook(file_path)
+        sheet = workbook.active
+
+    sheet.append([user_name, user_last_name, user_username, interesse, descricao])
+    workbook.save(file_path)
+
+# Função para enviar a planilha por e-mail
+def enviar_email():
+    email_user = 'leonardorfragoso@gmail.com'
+    email_password = 'ofanteltgansbxju'
+    email_send_list = ['leonardorfragoso@gmail.com', 'pyscript.tech@gmail.com']
+
+    subject = 'Novos Leads'
+
+    msg = MIMEMultipart()
+    msg['From'] = email_user
+    msg['To'] = ', '.join(email_send_list)
+    msg['Subject'] = subject
+
+    body = 'Segue em anexo a planilha atualizada com os novos leads.'
+    msg.attach(MIMEText(body, 'plain'))
+
+    filename = 'leads.xlsx'
+    attachment = open(filename, 'rb')
+
+    part = MIMEApplication(attachment.read(), Name=filename)
+    part['Content-Disposition'] = f'attachment; filename={filename}'
+    msg.attach(part)
+
+    attachment.close()
+
+    server = smtplib.SMTP('smtp.gmail.com', 587)
+    server.starttls()
+    server.login(email_user, email_password)
+    text = msg.as_string()
+    server.sendmail(email_user, email_send_list, text)
+    server.quit()
+
 # Função para manipular as mensagens recebidas
 def handle(msg):
     global user_states
@@ -52,6 +123,9 @@ def handle(msg):
         # Inicializa o estado do usuário se não existir
         if user_id not in user_states:
             user_states[user_id] = {'state': 'start'}
+            
+            # Envia a mensagem inicial pré-definida ao usuário
+            bot.sendMessage(chat_id, mensagem_inicial)
 
         state = user_states[user_id]['state']
 
@@ -64,6 +138,7 @@ def handle(msg):
             user_states[user_id]['user_name'] = message_text
             bot.sendMessage(chat_id, f"Obrigado, {message_text}! Qual é o seu sobrenome?")
             user_states[user_id]['state'] = 'perguntando_sobrenome'
+
 
         elif state == 'perguntando_sobrenome':
             user_states[user_id]['user_last_name'] = message_text
